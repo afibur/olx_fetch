@@ -1,0 +1,37 @@
+{
+  "query": {
+    "street": "Франка",
+    "city": "Київ",
+    "category": "Довгострокова оренда квартир",
+    "generated_at": "2026-08-23"
+  },
+  "source_note": "OLX.ua directly blocks outbound access from this environment's network policy (EGRESS_BLOCKED on www.olx.ua), so the live paginated API in olx_fetch.py could not be run here. The two listings below were located through web search against olx.ua and entered by hand as a working sample; run `python olx_fetch.py` in an environment with network access to olx.ua for the full, live result set.",
+  "listings": [
+    {
+      "id": "IDXPABn",
+      "title": "Оренда, вул. Івана Франка, Центр",
+      "price": 2800,
+      "currency": "USD",
+      "district": "Центр, біля м. Золоті Ворота",
+      "rooms": "3 кімнати",
+      "area_m2": "169 м²",
+      "floor": "3 з 12",
+      "building": "ЖК \"Ambassador House\"",
+      "description": "Елітний клас, історичний центр. Передпокій, кухня-вітальня, 2 спальні, 2 санвузли з душовими кабінами, гардеробна.",
+      "url": "https://www.olx.ua/d/uk/obyavlenie/orenda-kvartira-vul-franka-vana-tsentr-kiv-IDXPABn.html"
+    },
+    {
+      "id": "IDXGADA",
+      "title": "Оренда, вул. Івана Франка, 22-24",
+      "price": 3000,
+      "currency": "USD",
+      "district": "Центр, ~8 хв пішки від м. Золоті Ворота",
+      "rooms": "3 кімнати",
+      "area_m2": "180 м²",
+      "floor": "5 з 5",
+      "building": "Сталінський будинок, дворівнева, новий ліфт",
+      "description": "Дворівнева квартира-дуплекс у сталінському будинку в центрі міста.",
+      "url": "https://www.olx.ua/d/uk/obyavlenie/orenda-vul-vana-franka-22-24-3-kmnati-180-m-zolot-vorota-IDXGADA.html"
+    }
+  ]
+}
