@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
-"""Render fetched OLX rental listings as a single self-contained, mobile-friendly
-HTML report — readable in any browser, including Mobile Safari on iOS, with no
-app required.
+"""Render fetched OLX listings (rentals, devices, anything with the shared
+Listing shape) as a single self-contained, mobile-friendly HTML report —
+readable in any browser, including Mobile Safari on iOS, with no app
+required.
 
-Accepts either the flat list produced by `olx_fetch.py --output ....json`, or
-a `{"query": ..., "source_note": ..., "listings": [...]}` wrapper (used for
-the checked-in sample data).
+Accepts either the flat list produced by `olx_fetch*.py --output ....json`,
+or a `{"query": ..., "source_note": ..., "listings": [...]}` wrapper (used
+for the checked-in sample data). `query.street` selects the rental-report
+styling (Golden Gate icon, "аренда на <street>" heading); its absence falls
+back to a generic OLX-listings styling (chip icon), titled from
+`query.title`/`query.subtitle`/`query.category` when present.
 
 Example:
     python render_report.py data/franko_kyiv_rentals.json report.html
+    python render_report.py data/apple_m_series.json apple_report.html
 """
 from __future__ import annotations
 
@@ -76,7 +81,7 @@ PAGE_TEMPLATE = """<title>{title}</title>
     max-width: 640px;
     margin: 0 auto;
   }}
-  .gate {{
+  .icon {{
     display: block;
     margin: 0 auto 18px;
     color: var(--accent);
@@ -231,10 +236,8 @@ PAGE_TEMPLATE = """<title>{title}</title>
 
 <div class="page">
   <header>
-    <svg class="gate" width="72" height="46" viewBox="0 0 72 46" fill="none" aria-hidden="true">
-      <path d="M4 44V20C4 10 12 3 22 3M68 44V20C68 10 60 3 50 3M22 3C22 12 22 18 22 22M50 3C50 12 50 18 50 22M22 22C22 30 28 34 36 34C44 34 50 30 50 22M4 44H68" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-    </svg>
-    <p class="eyebrow">OLX &middot; довгострокова оренда</p>
+    {icon}
+    <p class="eyebrow">{eyebrow}</p>
     <h1>{title}</h1>
     <p class="subtitle">{subtitle}</p>
     <div class="stats">
@@ -268,6 +271,24 @@ CARD_TEMPLATE = """<article class="card">
 
 EMPTY_TEMPLATE = '<p class="empty">Оголошень за цим фільтром поки не знайдено.</p>'
 
+# A thin-line Golden Gate (Золоті Ворота) arch — used for the Kyiv rental
+# report, whose sample listings all sit a few minutes from the landmark.
+ICON_GATE = (
+    '<svg class="icon" width="72" height="46" viewBox="0 0 72 46" fill="none" aria-hidden="true">'
+    '<path d="M4 44V20C4 10 12 3 22 3M68 44V20C68 10 60 3 50 3M22 3C22 12 22 18 22 22'
+    'M50 3C50 12 50 18 50 22M22 22C22 30 28 34 36 34C44 34 50 30 50 22M4 44H68" '
+    'stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'
+)
+
+# A thin-line microchip — used for device/electronics reports.
+ICON_CHIP = (
+    '<svg class="icon" width="46" height="46" viewBox="0 0 46 46" fill="none" aria-hidden="true">'
+    '<rect x="12" y="12" width="22" height="22" rx="3" stroke="currentColor" stroke-width="2"/>'
+    '<rect x="19" y="19" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.6"/>'
+    '<path d="M18 12V4M28 12V4M18 42V34M28 42V34M12 18H4M12 28H4M42 18H34M42 28H34" '
+    'stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'
+)
+
 
 def _load(path: Path) -> dict[str, Any]:
     raw = json.loads(path.read_text(encoding="utf-8"))
@@ -290,17 +311,24 @@ def _format_price(listing: dict[str, Any]) -> str:
     return f"{symbol}{price_str}" if symbol in ("$", "€") else f"{price_str} {symbol}".strip()
 
 
-def _render_card(listing: dict[str, Any]) -> str:
-    meta_bits = [
-        listing.get("rooms"),
-        listing.get("area_m2"),
-        listing.get("floor"),
-        listing.get("building"),
+def _meta_bits(listing: dict[str, Any]) -> list[str]:
+    if listing.get("tags"):
+        return list(listing["tags"])
+    # Older data files (pre-refactor rental sample) used fixed keys instead
+    # of a generic tag list — still render those.
+    return [
+        b
+        for b in (listing.get("rooms"), listing.get("area_m2"), listing.get("floor"), listing.get("building"))
+        if b
     ]
-    meta_html = "".join(f"<span>{html.escape(str(b))}</span>" for b in meta_bits if b)
+
+
+def _render_card(listing: dict[str, Any]) -> str:
+    meta_html = "".join(f"<span>{html.escape(str(b))}</span>" for b in _meta_bits(listing))
+    location = listing.get("district") or listing.get("city") or listing.get("address") or ""
     return CARD_TEMPLATE.format(
         title=html.escape(listing.get("title") or "Без назви"),
-        district=html.escape(listing.get("district") or listing.get("address") or ""),
+        district=html.escape(str(location)),
         price=html.escape(_format_price(listing)),
         meta=meta_html,
         description=html.escape(listing.get("description") or ""),
@@ -311,9 +339,16 @@ def _render_card(listing: dict[str, Any]) -> str:
 def render(data: dict[str, Any]) -> str:
     query = data.get("query") or {}
     listings = data.get("listings") or []
-    street = query.get("street", "Франка")
+    street = query.get("street")
     city = query.get("city", "Київ")
     generated_at = query.get("generated_at", "")
+
+    title = query.get("title") or (f"Оренда на {street}" if street else "OLX")
+    subtitle = query.get("subtitle") or (
+        f"Довгострокова оренда квартир, вул. {street}, {city}" if street else query.get("category", "")
+    )
+    eyebrow = query.get("eyebrow") or ("OLX · довгострокова оренда" if street else "OLX · оголошення")
+    icon = ICON_GATE if street else ICON_CHIP
 
     cards_html = "\n    ".join(_render_card(item) for item in listings) if listings else EMPTY_TEMPLATE
     notice_html = ""
@@ -321,8 +356,10 @@ def render(data: dict[str, Any]) -> str:
         notice_html = f'<div class="notice"><strong>Про дані.</strong> {html.escape(data["source_note"])}</div>'
 
     return PAGE_TEMPLATE.format(
-        title=f"Оренда на {street}",
-        subtitle=html.escape(f"Довгострокова оренда квартир, вул. {street}, {city}"),
+        title=html.escape(title),
+        subtitle=html.escape(subtitle),
+        eyebrow=html.escape(eyebrow),
+        icon=icon,
         count=len(listings),
         generated_at=html.escape(generated_at) if generated_at else "&mdash;",
         notice=notice_html,

@@ -1,0 +1,116 @@
+{
+  "query": {
+    "title": "Apple на M1–M5",
+    "subtitle": "MacBook, Mac mini, Mac Studio та інші пристрої Apple на чипах M1–M5 з оголошень OLX",
+    "eyebrow": "OLX · Apple Silicon",
+    "category": "MacBook, Mac mini, iMac, Mac Studio, Mac Pro, iPad Pro (Apple Silicon: M1–M5)",
+    "generated_at": "2026-09-01"
+  },
+  "source_note": "OLX.ua directly blocks outbound access from this environment's network policy (EGRESS_BLOCKED on www.olx.ua), so the live search pipeline in olx_fetch_apple_silicon.py could not be run here. The listings below were located through web search against olx.ua and entered by hand from real, individual OLX ad pages (titles/prices/links as found); no M5 devices turned up in this sample search. Run `python olx_fetch_apple_silicon.py` in an environment with network access to olx.ua for the full, live result set.",
+  "listings": [
+    {
+      "id": "IDZzYEi",
+      "title": "MacBook Pro 16 2023, M3 Pro, 18/512, повний комплект",
+      "price": 68900,
+      "currency": "UAH",
+      "city": "Київ",
+      "district": null,
+      "tags": ["M3 Pro", "18 ГБ / 512 ГБ", "16\"", "Повний комплект"],
+      "description": "",
+      "url": "https://www.olx.ua/d/uk/obyavlenie/macbook-pro-16-2023-m3-pro-18gb-512-ssd-povniy-komplekt-84543sv-IDZzYEi.html",
+      "created_at": null,
+      "photo_url": null
+    },
+    {
+      "id": "IDXCAeJ",
+      "title": "MacBook Pro 14\" M3 Pro 18/512",
+      "price": 63999,
+      "currency": "UAH",
+      "city": "Тернопіль",
+      "district": null,
+      "tags": ["M3 Pro", "18 ГБ / 512 ГБ", "14\""],
+      "description": "",
+      "url": "https://www.olx.ua/d/uk/obyavlenie/macbook-pro-14-m3-pro-18-512-IDXCAeJ.html",
+      "created_at": null,
+      "photo_url": null
+    },
+    {
+      "id": "IDZxssc",
+      "title": "MacBook Air 15 M2 8/256, в чудовому стані",
+      "price": 29999,
+      "currency": "UAH",
+      "city": null,
+      "district": null,
+      "tags": ["M2", "8 ГБ / 256 ГБ", "15\"", "Стан: чудовий"],
+      "description": "",
+      "url": "https://www.olx.ua/d/obyavlenie/macbook-air-15-m2-8-256-v-chudovomu-stan-IDZxssc.html",
+      "created_at": null,
+      "photo_url": null
+    },
+    {
+      "id": "IDZzbdx",
+      "title": "Apple MacBook Air M2 15\" (2023) / 8GB / 256GB",
+      "price": 31000,
+      "currency": "UAH",
+      "city": null,
+      "district": null,
+      "tags": ["M2", "8 ГБ / 256 ГБ", "15\"", "2023"],
+      "description": "",
+      "url": "https://www.olx.ua/d/uk/obyavlenie/apple-macbook-air-m2-15-2023-8gb-256gb-IDZzbdx.html",
+      "created_at": null,
+      "photo_url": null
+    },
+    {
+      "id": "IDWsdV3",
+      "title": "Mac mini M2 8/256 2023",
+      "price": null,
+      "currency": "UAH",
+      "city": null,
+      "district": null,
+      "tags": ["M2", "8 ГБ / 256 ГБ", "2023"],
+      "description": "",
+      "url": "https://www.olx.ua/d/uk/obyavlenie/mac-mini-m2-8-256-2023-IDWsdV3.html",
+      "created_at": null,
+      "photo_url": null
+    },
+    {
+      "id": "IDXLfTN",
+      "title": "Mac Studio M4 Max | M3 Ultra",
+      "price": 115000,
+      "currency": "UAH",
+      "city": "Київ",
+      "district": null,
+      "tags": ["M4 Max / M3 Ultra", "Конфігурації на вибір"],
+      "description": "",
+      "url": "https://www.olx.ua/d/uk/obyavlenie/mac-studio-m4-max-m3-ultra-IDXLfTN.html",
+      "created_at": null,
+      "photo_url": null
+    },
+    {
+      "id": "IDTyDKj",
+      "title": "Mac Studio M1 / M2 Ultra Max, гарантія, обмін, кредит",
+      "price": 82150,
+      "currency": "UAH",
+      "city": "Черкаси",
+      "district": null,
+      "tags": ["M1 / M2 Ultra Max", "Гарантія", "Обмін", "Кредит"],
+      "description": "",
+      "url": "https://www.olx.ua/d/uk/obyavlenie/mac-studio-m1-m2-ultra-max-garantya-obmn-kredit-IDTyDKj.html",
+      "created_at": null,
+      "photo_url": null
+    },
+    {
+      "id": "IDXksB9",
+      "title": "MacBook Pro 13 Space M1 16/512 (№2027)",
+      "price": 25000,
+      "currency": "UAH",
+      "city": "Київ",
+      "district": null,
+      "tags": ["M1", "16 ГБ / 512 ГБ", "13\""],
+      "description": "",
+      "url": "https://www.olx.ua/d/uk/obyavlenie/2027macbook-pro-13-space-m116-512-IDXksB9.html",
+      "created_at": null,
+      "photo_url": null
+    }
+  ]
+}

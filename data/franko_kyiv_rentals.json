@@ -12,26 +12,26 @@
       "title": "Оренда, вул. Івана Франка, Центр",
       "price": 2800,
       "currency": "USD",
+      "city": "Київ",
       "district": "Центр, біля м. Золоті Ворота",
-      "rooms": "3 кімнати",
-      "area_m2": "169 м²",
-      "floor": "3 з 12",
-      "building": "ЖК \"Ambassador House\"",
+      "tags": ["3 кімнати", "169 м²", "поверх 3 з 12", "ЖК \"Ambassador House\""],
       "description": "Елітний клас, історичний центр. Передпокій, кухня-вітальня, 2 спальні, 2 санвузли з душовими кабінами, гардеробна.",
-      "url": "https://www.olx.ua/d/uk/obyavlenie/orenda-kvartira-vul-franka-vana-tsentr-kiv-IDXPABn.html"
+      "url": "https://www.olx.ua/d/uk/obyavlenie/orenda-kvartira-vul-franka-vana-tsentr-kiv-IDXPABn.html",
+      "created_at": null,
+      "photo_url": null
     },
     {
       "id": "IDXGADA",
       "title": "Оренда, вул. Івана Франка, 22-24",
       "price": 3000,
       "currency": "USD",
+      "city": "Київ",
       "district": "Центр, ~8 хв пішки від м. Золоті Ворота",
-      "rooms": "3 кімнати",
-      "area_m2": "180 м²",
-      "floor": "5 з 5",
-      "building": "Сталінський будинок, дворівнева, новий ліфт",
+      "tags": ["3 кімнати", "180 м²", "поверх 5 з 5", "Сталінський будинок, дуплекс, новий ліфт"],
       "description": "Дворівнева квартира-дуплекс у сталінському будинку в центрі міста.",
-      "url": "https://www.olx.ua/d/uk/obyavlenie/orenda-vul-vana-franka-22-24-3-kmnati-180-m-zolot-vorota-IDXGADA.html"
+      "url": "https://www.olx.ua/d/uk/obyavlenie/orenda-vul-vana-franka-22-24-3-kmnati-180-m-zolot-vorota-IDXGADA.html",
+      "created_at": null,
+      "photo_url": null
     }
   ]
 }
