@@ -1,0 +1,5 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# Вызывается Termux, когда в Instagram нажимаете «Поделиться → Termux».
+python "$HOME/insta/insta_dl.py" "$1"
+echo
+read -n 1 -s -r -p "Нажмите любую клавишу, чтобы закрыть..."
