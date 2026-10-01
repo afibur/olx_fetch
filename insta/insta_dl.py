@@ -9,7 +9,6 @@
     python insta_dl.py URL --cookies cookies.txt   # для приватных аккаунтов и stories
 """
 import argparse
-import os
 import re
 import shutil
 import subprocess
@@ -26,6 +25,9 @@ def default_output_dir() -> Path:
     termux_shared = Path.home() / "storage" / "shared"
     if termux_shared.exists():
         return termux_shared / "Pictures" / "Instagram"
+    # На iPhone (a-Shell) видна в приложении «Файлы» только папка Documents
+    if sys.platform == "darwin" and not (Path.home() / "Downloads").exists():
+        return Path.home() / "Documents" / "Instagram"
     return Path.home() / "Downloads" / "Instagram"
 
 
@@ -37,36 +39,46 @@ def extract_url(text: str) -> str:
     return match.group(0).split("?")[0]
 
 
-def tool_cmd(module: str) -> list[str]:
-    exe = shutil.which(module)
-    return [exe] if exe else [sys.executable, "-m", module.replace("-", "_")]
-
-
 def list_files(folder: Path) -> set[Path]:
     return {p for p in folder.rglob("*") if p.is_file()}
 
 
+def run_module(call, argv: list[str]) -> bool:
+    """Запуск в том же процессе: на iPhone (a-Shell) вложенный python не работает."""
+    old_argv = sys.argv
+    sys.argv = ["prog", *argv]
+    try:
+        code = call()
+    except SystemExit as e:
+        code = e.code
+    except Exception as e:  # noqa: BLE001 — сообщаем и переходим к запасному варианту
+        print(f"Ошибка: {e}")
+        code = 1
+    finally:
+        sys.argv = old_argv
+    return code in (0, None)
+
+
 def run_gallery_dl(url: str, out: Path, cookies: Path | None) -> bool:
-    cmd = tool_cmd("gallery-dl") + [
+    import gallery_dl
+    argv = [
         "--directory", str(out),
         "--filename", "{username}_{shortcode}_{num:>02}.{extension}",
         "--no-mtime",
-        url,
     ]
     if cookies:
-        cmd[-1:-1] = ["--cookies", str(cookies)]
-    return subprocess.run(cmd).returncode == 0
+        argv += ["--cookies", str(cookies)]
+    argv.append(url)
+    return run_module(gallery_dl.main, argv)
 
 
 def run_yt_dlp(url: str, out: Path, cookies: Path | None) -> bool:
-    cmd = tool_cmd("yt-dlp") + [
-        "-o", str(out / "%(uploader_id)s_%(id)s.%(ext)s"),
-        "--no-mtime",
-        url,
-    ]
+    import yt_dlp
+    argv = ["-o", str(out / "%(uploader_id)s_%(id)s.%(ext)s"), "--no-mtime"]
     if cookies:
-        cmd[-1:-1] = ["--cookies", str(cookies)]
-    return subprocess.run(cmd).returncode == 0
+        argv += ["--cookies", str(cookies)]
+    argv.append(url)
+    return run_module(lambda: yt_dlp.main(argv), argv)
 
 
 def media_scan(files: set[Path]) -> None:
