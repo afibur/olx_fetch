@@ -6,7 +6,7 @@ Instagram: посты, карусели, reels, stories. TikTok: видео и �
 Сначала берёт данные поста через yt-dlp и сам скачивает все фото и видео
 (yt-dlp умеет работать без входа, но фото не сохраняет). Если не вышло —
 gallery-dl (нужен cookies.txt), затем обычный yt-dlp (только видео).
-TikTok: gallery-dl (фото и видео), если не вышло — yt-dlp (видео).
+TikTok: yt-dlp (видео), если не вышло — gallery-dl (фото-посты).
 
 Примеры:
     python insta_dl.py https://www.instagram.com/p/XXXXXXXX/
@@ -162,7 +162,14 @@ def run_gallery_dl(url: str, out: Path, cookies: Path | None) -> bool:
 def run_yt_dlp(url: str, out: Path, cookies: Path | None) -> bool:
     yt_dlp = need("yt_dlp")
     template = "tt_%(id)s.%(ext)s" if is_tiktok(url) else "ig_%(uploader_id)s_%(id)s.%(ext)s"
-    argv = ["-o", str(out / template), "--no-mtime"]
+    argv = [
+        "-o", str(out / template), "--no-mtime",
+        # Один файл, где уже есть и видео, и звук. Иначе yt-dlp склеивает видео
+        # с отдельной mp3-дорожкой, а Фото на iPhone такой mp3 внутри mp4 не играет.
+        "-f", "b/bv*+ba",
+        # Если склейка всё же нужна — перекодировать звук в AAC (его понимает iPhone)
+        "--postprocessor-args", "Merger:-c:a aac",
+    ]
     if cookies:
         argv += ["--cookies", str(cookies)]
     argv.append(url)
@@ -209,13 +216,17 @@ def main() -> None:
     print(f"Скачиваю {url}\n -> {out}")
     before = list_files(out)
     if is_tiktok(url):
-        ok = run_gallery_dl(url, out, cookies)
+        # Видео надёжнее качает yt-dlp; фото-посты (слайдшоу) он не умеет — тогда gallery-dl
+        ok = run_yt_dlp(url, out, cookies)
+        if not ok:
+            print("Пробую gallery-dl (фото-пост?)...")
+            ok = run_gallery_dl(url, out, cookies)
     else:
         ok = run_direct(url, out, cookies)
         if not ok:
             print("Пробую gallery-dl...")
             ok = run_gallery_dl(url, out, cookies)
-    if not ok:
+    if not ok and not is_tiktok(url):
         print("gallery-dl не справился, пробую yt-dlp...")
         ok = run_yt_dlp(url, out, cookies)
 
