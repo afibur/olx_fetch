@@ -59,8 +59,15 @@ def run_module(call, argv: list[str]) -> bool:
     return code in (0, None)
 
 
+def need(module: str):
+    try:
+        return __import__(module)
+    except ImportError:
+        sys.exit(f"Не установлен {module}. Выполните: pip install gallery-dl yt-dlp")
+
+
 def run_gallery_dl(url: str, out: Path, cookies: Path | None) -> bool:
-    import gallery_dl
+    gallery_dl = need("gallery_dl")
     argv = [
         "--directory", str(out),
         "--filename", "{username}_{shortcode}_{num:>02}.{extension}",
@@ -73,7 +80,7 @@ def run_gallery_dl(url: str, out: Path, cookies: Path | None) -> bool:
 
 
 def run_yt_dlp(url: str, out: Path, cookies: Path | None) -> bool:
-    import yt_dlp
+    yt_dlp = need("yt_dlp")
     argv = ["-o", str(out / "%(uploader_id)s_%(id)s.%(ext)s"), "--no-mtime"]
     if cookies:
         argv += ["--cookies", str(cookies)]
@@ -90,12 +97,15 @@ def media_scan(files: set[Path]) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Скачать фото/видео из Instagram")
-    parser.add_argument("url", nargs="+", help="ссылка (или текст со ссылкой)")
+    parser.add_argument("url", nargs="*", help="ссылка (или текст со ссылкой)")
     parser.add_argument("-o", "--output", type=Path, default=None, help="папка для сохранения")
     parser.add_argument("--cookies", type=Path, default=None,
                         help="cookies.txt (Netscape) от залогиненного Instagram")
     args = parser.parse_args()
 
+    if not args.url:
+        sys.exit("Ссылка не передана. В Быстрой команде вставьте переменную «URL-адреса» "
+                 "сразу после insta_dl.py и запускайте команду через «Поделиться» из Instagram.")
     url = extract_url(" ".join(args.url))
     out = (args.output or default_output_dir()).expanduser()
     out.mkdir(parents=True, exist_ok=True)

@@ -8,13 +8,17 @@
 ### 1. Установка (один раз)
 
 1. Установите бесплатное приложение **a-Shell** из App Store (не путать с «a-Shell mini»).
-2. Откройте a-Shell и выполните по очереди:
+2. Положите скрипт в a-Shell (репозиторий приватный, поэтому `curl` по ссылке не сработает):
+   - откройте файл `insta/insta_dl.py` (в приложении Claude или GitHub) → **Поделиться → Сохранить в «Файлы»**
+     → **На iPhone → a-Shell** (это папка `~/Documents`);
+   - или скопируйте весь текст скрипта и в a-Shell выполните `pbpaste > ~/Documents/insta_dl.py`.
+3. В a-Shell выполните:
    ```bash
    pip install gallery-dl yt-dlp
-   curl -L https://raw.githubusercontent.com/afibur/olx_fetch/main/insta/insta_dl.py -o ~/Documents/insta_dl.py
    mkdir -p ~/Documents/Instagram/new
+   ls ~/Documents          # должно быть видно insta_dl.py
    ```
-3. Проверка — скопируйте ссылку на любой пост и выполните:
+4. Проверка — скопируйте ссылку на любой пост и выполните:
    ```bash
    python ~/Documents/insta_dl.py https://www.instagram.com/p/XXXXXXX/
    ```
