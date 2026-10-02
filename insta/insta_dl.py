@@ -149,7 +149,7 @@ def run_gallery_dl(url: str, out: Path, cookies: Path | None) -> bool:
     gallery_dl = need("gallery_dl")
     if is_tiktok(url):
         # audio=false: у фото-постов TikTok есть музыка (mp3), в Фото её не сохранить
-        name = ["--filename", "tt_{id}_{num:>02}.{extension}", "-o", "audio=false"]
+        name = ["--filename", "tt_{user|'unknown'}_{id}_{num:>02}.{extension}", "-o", "audio=false"]
     else:
         name = ["--filename", "ig_{username}_{shortcode}_{num:>02}.{extension}"]
     argv = ["--directory", str(out), *name, "--no-mtime"]
@@ -161,7 +161,8 @@ def run_gallery_dl(url: str, out: Path, cookies: Path | None) -> bool:
 
 def run_yt_dlp(url: str, out: Path, cookies: Path | None) -> bool:
     yt_dlp = need("yt_dlp")
-    template = "tt_%(id)s.%(ext)s" if is_tiktok(url) else "ig_%(uploader_id)s_%(id)s.%(ext)s"
+    template = "tt_%(uploader,channel|unknown)s_%(id)s.%(ext)s" if is_tiktok(url) \
+        else "ig_%(channel,uploader_id|unknown)s_%(id)s.%(ext)s"
     argv = [
         "-o", str(out / template), "--no-mtime",
         # Один файл, где уже есть и видео, и звук. Иначе yt-dlp склеивает видео
