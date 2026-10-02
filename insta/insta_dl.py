@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
-"""Скачивание фото и видео из Instagram (посты, карусели, reels, stories).
+"""Скачивание фото и видео из Instagram и TikTok.
+
+Instagram: посты, карусели, reels, stories. TikTok: видео и фото-посты (слайдшоу).
 
 Сначала берёт данные поста через yt-dlp и сам скачивает все фото и видео
 (yt-dlp умеет работать без входа, но фото не сохраняет). Если не вышло —
 gallery-dl (нужен cookies.txt), затем обычный yt-dlp (только видео).
+TikTok: gallery-dl (фото и видео), если не вышло — yt-dlp (видео).
 
 Примеры:
     python insta_dl.py https://www.instagram.com/p/XXXXXXXX/
@@ -19,7 +22,12 @@ from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 DEFAULT_COOKIES = SCRIPT_DIR / "cookies.txt"
-URL_RE = re.compile(r"https?://(?:www\.)?(?:instagram\.com|instagr\.am)/\S+", re.I)
+URL_RE = re.compile(
+    r"https?://(?:[\w-]+\.)?(?:instagram\.com|instagr\.am|tiktok\.com)/\S+", re.I)
+
+
+def is_tiktok(url: str) -> bool:
+    return "tiktok.com" in url.lower()
 
 
 def default_output_dir() -> Path:
@@ -39,8 +47,8 @@ def default_output_dir() -> Path:
 def extract_url(text: str) -> str:
     match = URL_RE.search(text)
     if not match:
-        sys.exit(f"Не найдена ссылка Instagram в: {text!r}")
-    # Убираем трекинговые параметры (?igsh=..., ?utm_source=...)
+        sys.exit(f"Не найдена ссылка Instagram или TikTok в: {text!r}")
+    # Убираем трекинговые параметры (?igsh=..., ?_t=..., ?utm_source=...)
     return match.group(0).split("?")[0]
 
 
@@ -139,11 +147,12 @@ def run_direct(url: str, out: Path, cookies: Path | None) -> bool:
 
 def run_gallery_dl(url: str, out: Path, cookies: Path | None) -> bool:
     gallery_dl = need("gallery_dl")
-    argv = [
-        "--directory", str(out),
-        "--filename", "{username}_{shortcode}_{num:>02}.{extension}",
-        "--no-mtime",
-    ]
+    if is_tiktok(url):
+        # audio=false: у фото-постов TikTok есть музыка (mp3), в Фото её не сохранить
+        name = ["--filename", "tiktok_{id}_{num:>02}.{extension}", "-o", "audio=false"]
+    else:
+        name = ["--filename", "{username}_{shortcode}_{num:>02}.{extension}"]
+    argv = ["--directory", str(out), *name, "--no-mtime"]
     if cookies:
         argv += ["--cookies", str(cookies)]
     argv.append(url)
@@ -152,7 +161,8 @@ def run_gallery_dl(url: str, out: Path, cookies: Path | None) -> bool:
 
 def run_yt_dlp(url: str, out: Path, cookies: Path | None) -> bool:
     yt_dlp = need("yt_dlp")
-    argv = ["-o", str(out / "%(uploader_id)s_%(id)s.%(ext)s"), "--no-mtime"]
+    template = "tiktok_%(id)s.%(ext)s" if is_tiktok(url) else "%(uploader_id)s_%(id)s.%(ext)s"
+    argv = ["-o", str(out / template), "--no-mtime"]
     if cookies:
         argv += ["--cookies", str(cookies)]
     argv.append(url)
@@ -178,7 +188,7 @@ def fix_argv(argv: list[str]) -> list[str]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Скачать фото/видео из Instagram")
+    parser = argparse.ArgumentParser(description="Скачать фото/видео из Instagram и TikTok")
     parser.add_argument("url", nargs="*", help="ссылка (или текст со ссылкой)")
     parser.add_argument("-o", "--output", type=Path, default=None, help="папка для сохранения")
     parser.add_argument("--cookies", type=Path, default=None,
@@ -198,10 +208,13 @@ def main() -> None:
 
     print(f"Скачиваю {url}\n -> {out}")
     before = list_files(out)
-    ok = run_direct(url, out, cookies)
-    if not ok:
-        print("Пробую gallery-dl...")
+    if is_tiktok(url):
         ok = run_gallery_dl(url, out, cookies)
+    else:
+        ok = run_direct(url, out, cookies)
+        if not ok:
+            print("Пробую gallery-dl...")
+            ok = run_gallery_dl(url, out, cookies)
     if not ok:
         print("gallery-dl не справился, пробую yt-dlp...")
         ok = run_yt_dlp(url, out, cookies)
