@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Скачивание фото и видео из Instagram (посты, карусели, reels, stories).
 
-Использует gallery-dl (фото + видео, карусели), при неудаче — yt-dlp (видео).
+Сначала берёт данные поста через yt-dlp и сам скачивает все фото и видео
+(yt-dlp умеет работать без входа, но фото не сохраняет). Если не вышло —
+gallery-dl (нужен cookies.txt), затем обычный yt-dlp (только видео).
 
 Примеры:
     python insta_dl.py https://www.instagram.com/p/XXXXXXXX/
@@ -69,6 +71,72 @@ def need(module: str):
         sys.exit(f"Не установлен {module}. Выполните: pip install gallery-dl yt-dlp")
 
 
+def best(items: list, key: str = "width") -> str | None:
+    items = [i for i in items or [] if isinstance(i, dict) and i.get("url")]
+    return max(items, key=lambda i: i.get(key) or 0)["url"] if items else None
+
+
+def media_urls(post: dict) -> list[tuple[str, str]]:
+    """[(url, расширение), ...] для всех фото/видео поста (включая карусель)."""
+    result = []
+    for item in post.get("carousel_media") or [post]:
+        video = best(item.get("video_versions"))
+        image = best((item.get("image_versions2") or {}).get("candidates"))
+        if video:
+            result.append((video, "mp4"))
+        elif image:
+            result.append((image, "jpg"))
+    return result
+
+
+def run_direct(url: str, out: Path, cookies: Path | None) -> bool:
+    """yt-dlp получает данные поста, а файлы (в том числе фото) качаем сами."""
+    yt_dlp = need("yt_dlp")
+    from yt_dlp.extractor.instagram import InstagramIE
+
+    posts = []
+    original = InstagramIE._extract_product
+
+    def capture(self, product_info, *args, **kwargs):
+        posts.append(product_info[0] if isinstance(product_info, list) else product_info)
+        return original(self, product_info, *args, **kwargs)
+
+    params = {"quiet": True, "no_warnings": True, "ignore_no_formats_error": True}
+    if cookies:
+        params["cookiefile"] = str(cookies)
+    InstagramIE._extract_product = capture
+    try:
+        with yt_dlp.YoutubeDL(params) as ydl:
+            try:
+                ydl.extract_info(url, download=False, process=False)
+            except Exception as e:  # noqa: BLE001 — для фото-постов yt-dlp ругается «нет видео»
+                if not posts:
+                    print(f"Не удалось получить данные поста: {e}")
+                    return False
+            if not posts:
+                return False
+            post = posts[0]
+            files = media_urls(post)
+            if not files:
+                return False
+            user = (post.get("user") or {}).get("username") or "instagram"
+            code = post.get("code") or url.rstrip("/").rsplit("/", 1)[-1]
+            for num, (media_url, ext) in enumerate(files, 1):
+                target = out / f"{user}_{code}_{num:02}.{ext}"
+                if target.exists():
+                    continue
+                print(f"  {target.name}")
+                with ydl.urlopen(yt_dlp.networking.Request(
+                        media_url, headers={"Referer": "https://www.instagram.com/"})) as resp:
+                    target.write_bytes(resp.read())
+    except Exception as e:  # noqa: BLE001
+        print(f"Ошибка при скачивании: {e}")
+        return False
+    finally:
+        InstagramIE._extract_product = original
+    return True
+
+
 def run_gallery_dl(url: str, out: Path, cookies: Path | None) -> bool:
     gallery_dl = need("gallery_dl")
     argv = [
@@ -130,7 +198,10 @@ def main() -> None:
 
     print(f"Скачиваю {url}\n -> {out}")
     before = list_files(out)
-    ok = run_gallery_dl(url, out, cookies)
+    ok = run_direct(url, out, cookies)
+    if not ok:
+        print("Пробую gallery-dl...")
+        ok = run_gallery_dl(url, out, cookies)
     if not ok:
         print("gallery-dl не справился, пробую yt-dlp...")
         ok = run_yt_dlp(url, out, cookies)
