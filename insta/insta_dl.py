@@ -25,9 +25,12 @@ def default_output_dir() -> Path:
     termux_shared = Path.home() / "storage" / "shared"
     if termux_shared.exists():
         return termux_shared / "Pictures" / "Instagram"
-    # На iPhone (a-Shell) видна в приложении «Файлы» только папка Documents
-    if sys.platform == "darwin" and not (Path.home() / "Downloads").exists():
-        return Path.home() / "Documents" / "Instagram"
+    # На iPhone (a-Shell, sys.platform == "ios") писать можно только в Documents;
+    # Быстрая команда забирает файлы из Documents/Instagram/new
+    documents = Path.home() / "Documents"
+    if sys.platform in ("ios", "darwin") and documents.exists() \
+            and not (Path.home() / "Downloads").exists():
+        return documents / "Instagram" / "new"
     return Path.home() / "Downloads" / "Instagram"
 
 
@@ -95,13 +98,24 @@ def media_scan(files: set[Path]) -> None:
         subprocess.run([scan, *map(str, files)], stdout=subprocess.DEVNULL)
 
 
+def fix_argv(argv: list[str]) -> list[str]:
+    """Быстрая команда может «приклеить» -o к ссылке: '...?x=1-o' -> ['...?x=1', '-o']."""
+    fixed = []
+    for arg in argv:
+        if URL_RE.match(arg) and arg.endswith("-o") and len(arg) > 2:
+            fixed += [arg[:-2], "-o"]
+        else:
+            fixed.append(arg)
+    return fixed
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Скачать фото/видео из Instagram")
     parser.add_argument("url", nargs="*", help="ссылка (или текст со ссылкой)")
     parser.add_argument("-o", "--output", type=Path, default=None, help="папка для сохранения")
     parser.add_argument("--cookies", type=Path, default=None,
                         help="cookies.txt (Netscape) от залогиненного Instagram")
-    args = parser.parse_args()
+    args = parser.parse_args(fix_argv(sys.argv[1:]))
 
     if not args.url:
         sys.exit("Ссылка не передана. В Быстрой команде вставьте переменную «URL-адреса» "
