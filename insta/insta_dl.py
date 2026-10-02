@@ -130,7 +130,7 @@ def run_direct(url: str, out: Path, cookies: Path | None) -> bool:
             user = (post.get("user") or {}).get("username") or "instagram"
             code = post.get("code") or url.rstrip("/").rsplit("/", 1)[-1]
             for num, (media_url, ext) in enumerate(files, 1):
-                target = out / f"{user}_{code}_{num:02}.{ext}"
+                target = out / f"ig_{user}_{code}_{num:02}.{ext}"
                 if target.exists():
                     continue
                 print(f"  {target.name}")
@@ -149,9 +149,9 @@ def run_gallery_dl(url: str, out: Path, cookies: Path | None) -> bool:
     gallery_dl = need("gallery_dl")
     if is_tiktok(url):
         # audio=false: у фото-постов TikTok есть музыка (mp3), в Фото её не сохранить
-        name = ["--filename", "tiktok_{id}_{num:>02}.{extension}", "-o", "audio=false"]
+        name = ["--filename", "tt_{id}_{num:>02}.{extension}", "-o", "audio=false"]
     else:
-        name = ["--filename", "{username}_{shortcode}_{num:>02}.{extension}"]
+        name = ["--filename", "ig_{username}_{shortcode}_{num:>02}.{extension}"]
     argv = ["--directory", str(out), *name, "--no-mtime"]
     if cookies:
         argv += ["--cookies", str(cookies)]
@@ -161,7 +161,7 @@ def run_gallery_dl(url: str, out: Path, cookies: Path | None) -> bool:
 
 def run_yt_dlp(url: str, out: Path, cookies: Path | None) -> bool:
     yt_dlp = need("yt_dlp")
-    template = "tiktok_%(id)s.%(ext)s" if is_tiktok(url) else "%(uploader_id)s_%(id)s.%(ext)s"
+    template = "tt_%(id)s.%(ext)s" if is_tiktok(url) else "ig_%(uploader_id)s_%(id)s.%(ext)s"
     argv = ["-o", str(out / template), "--no-mtime"]
     if cookies:
         argv += ["--cookies", str(cookies)]
