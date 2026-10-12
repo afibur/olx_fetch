@@ -21,7 +21,15 @@ import sys
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-DEFAULT_COOKIES = SCRIPT_DIR / "cookies.txt"
+
+
+def default_cookies(url: str) -> Path | None:
+    """cookies_tiktok.txt / cookies_instagram.txt рядом со скриптом, иначе общий cookies.txt."""
+    name = "cookies_tiktok.txt" if is_tiktok(url) else "cookies_instagram.txt"
+    for path in (SCRIPT_DIR / name, SCRIPT_DIR / "cookies.txt"):
+        if path.exists():
+            return path
+    return None
 URL_RE = re.compile(
     r"https?://(?:[\w-]+\.)?(?:instagram\.com|instagr\.am|tiktok\.com)/\S+", re.I)
 
@@ -210,7 +218,7 @@ def main() -> None:
     out = (args.output or default_output_dir()).expanduser()
     out.mkdir(parents=True, exist_ok=True)
 
-    cookies = args.cookies or (DEFAULT_COOKIES if DEFAULT_COOKIES.exists() else None)
+    cookies = args.cookies or default_cookies(url)
     if cookies and not cookies.exists():
         sys.exit(f"Файл cookies не найден: {cookies}")
 
@@ -241,8 +249,11 @@ def main() -> None:
     elif ok:
         print("\nФайлы уже были скачаны ранее.")
     else:
-        sys.exit("\nНе удалось скачать. Если пост приватный или Instagram просит вход — "
-                 "положите cookies.txt рядом со скриптом (см. README).")
+        site, cookie_file = (("TikTok", "cookies_tiktok.txt") if is_tiktok(url)
+                             else ("Instagram", "cookies_instagram.txt"))
+        hint = ("уже используется " + cookies.name + " — возможно, он устарел, выгрузите заново"
+                if cookies else f"положите {cookie_file} рядом со скриптом (см. README)")
+        sys.exit(f"\nНе удалось скачать. Если пост приватный, 18+ или {site} просит вход — {hint}.")
 
 
 if __name__ == "__main__":
